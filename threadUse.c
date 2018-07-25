@@ -36,7 +36,7 @@ void* calcArea ( void *args)
 int main()
 {
 	int  lLim, uLim, retVal;
-	float blockSize;
+	float blockSize;		//integration range of each thread
 	printf("Enter lower limit of integration: ");
 	scanf("%d", &lLim);
 	printf("\nEnter upper limit of integration: ");
