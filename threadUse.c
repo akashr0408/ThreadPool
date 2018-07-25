@@ -16,10 +16,15 @@ struct parameters
 
 void* calcArea ( void *args)
 {
-	struct parameters* p = (struct parameters*) args;
+	struct parameters* p = malloc(sizeof(struct parameters*));
+       	p = (struct parameters*) args;
+	
 	float stepSize = 1/RESOLUTION;
+	
+	//printf for debugging purposes
 	printf("%d , %d", p->llim, p->ulim);
 	printf("%.3f", stepSize);
+
 	float subArea = 0;	
 	for (float i =p->llim; i <= p->ulim; i+=stepSize)
 	{
@@ -31,6 +36,7 @@ void* calcArea ( void *args)
 	pthread_mutex_lock(&lock);
 	area += subArea;
 	pthread_mutex_unlock(&lock);
+	free(p);
 }
 
 int main()
@@ -43,9 +49,17 @@ int main()
 	scanf("%d", &uLim);
 	
 	blockSize = (uLim - lLim)/THREAD_COUNT;
-	
+	//--printf for debugging
+	printf("BlockSize as defined in main: %.3f", blockSize);
+
 	//---------- create struct objects and thread ids---------
 	struct parameters *p= malloc(sizeof(struct parameters)* THREAD_COUNT);
+	if(p == NULL)
+	{
+		printf("Malloc Failed!.... Exiting...");
+		exit(1);
+	}
+
 	pthread_t tID[4];
 	
 	for(int i=0; i<THREAD_COUNT; i++)
