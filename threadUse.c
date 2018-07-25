@@ -58,4 +58,6 @@ int main()
 
 	printf("Integration Result = %.3f", area);
 	free(p);
+	
+	return 0;
 }
