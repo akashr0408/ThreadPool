@@ -2,41 +2,43 @@
 #include<pthread.h>
 #include<stdlib.h>
 
-static const int THREAD_COUNT = 4;
+static const int THREAD_COUNT = 6;
 static const int RESOLUTION = 100;
 
 long double area = 0;
-pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t lock;
 
 
-struct parameters
+struct parameters		//parameters for thread scope function
 {
-	int llim, ulim;
+	float llim, ulim;
 };
 
 void* calcArea ( void *args)
 {
-	struct parameters* p = malloc(sizeof(struct parameters*));
-       	p = (struct parameters*) args;
+	struct parameters* _p = (struct parameters*) args;
 	
-	float stepSize = 1/RESOLUTION;
+	float stepSize = (float)1/RESOLUTION;
 	
 	//printf for debugging purposes
-	printf("%d , %d", p->llim, p->ulim);
-	printf("%.3f", stepSize);
+	printf("Ulim: %.2f , Llim: %.2f\n", _p->llim, _p->ulim);
+	printf("stepsize: %.3f\n", stepSize);
 
-	float subArea = 0;	
-	for (float i =p->llim; i <= p->ulim; i+=stepSize)
+	float subArea = 0;
+	unsigned long int totRects = (_p->ulim - _p->llim)*RESOLUTION;	
+	for(int i =0; i <= totRects; ++i)
 	{
-		subArea += (i*i)*stepSize;	//small rectangle  of height i^2 and width stepSize
-		//printf("%d : %.3f\n", i, subArea);
+		float j = _p->llim + (float)i/RESOLUTION;
+		subArea += (j*j)*stepSize;	//small rectangle  of height i^2 and width stepSize
 	}
 	
 	printf("subArea = %.3f\n", subArea);		
-	pthread_mutex_lock(&lock);
+	//pthread_mutex_lock(&lock);
 	area += subArea;
-	pthread_mutex_unlock(&lock);
-	free(p);
+	//pthread_mutex_unlock(&lock);
+	printf("Area = %.3f\n", area);
+	
+	return NULL;
 }
 
 int main()
@@ -47,10 +49,10 @@ int main()
 	scanf("%d", &lLim);
 	printf("\nEnter upper limit of integration: ");
 	scanf("%d", &uLim);
-	
-	blockSize = (uLim - lLim)/THREAD_COUNT;
+	printf("Got those values \n");	
+	blockSize = (float)(uLim - lLim)/THREAD_COUNT;
 	//--printf for debugging
-	printf("BlockSize as defined in main: %.3f", blockSize);
+	printf("BlockSize as defined in main: %.3f\n", blockSize);
 
 	//---------- create struct objects and thread ids---------
 	struct parameters *p= malloc(sizeof(struct parameters)* THREAD_COUNT);
@@ -59,19 +61,40 @@ int main()
 		printf("Malloc Failed!.... Exiting...");
 		exit(1);
 	}
+	printf("size of p : %.3f\n", (float)sizeof(p)/sizeof(struct parameters*));
+	
+	if(pthread_mutex_init(&lock, NULL) != 0)
+	{
+		printf("Mutex failed..Exiting..");
+		exit(1);
+	}
 
 	pthread_t tID[4];
+	void *ret;
 	
 	for(int i=0; i<THREAD_COUNT; i++)
 	{
+		printf("In the for loop..\n");
+		printf("i : %d\n", i);
 		p[i].llim = lLim + i*blockSize;
 		p[i].ulim = p[i].llim + blockSize;
 		retVal = pthread_create(&tID[i], NULL, calcArea, &p[i]);
-		pthread_join(tID[i], NULL);	
+		if(retVal != 0)
+		{
+			printf("Thread not created");
+			exit(2);
+		}
+		if(pthread_join(tID[i], &ret) != 0)
+		{
+			printf("Error Joining thread %d. Exiting...", i);
+			exit(3);
+		}
 	}
 
 	printf("Integration Result = %.3f", area);
+	printf("Done!");
 	free(p);
+	pthread_mutex_destroy(&lock);
 	
 	return 0;
 }
