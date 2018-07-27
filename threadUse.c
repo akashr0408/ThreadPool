@@ -3,11 +3,9 @@
 #include<stdlib.h>
 
 static const int THREAD_COUNT = 6;
-static const int RESOLUTION = 100;
-
+static const int RESOLUTION = 1000;
 long double area = 0;
 pthread_mutex_t area_lock;
-
 
 struct parameters		//parameters for thread scope function
 {
@@ -17,13 +15,7 @@ struct parameters		//parameters for thread scope function
 void* calcArea ( void *args)
 {
 	struct parameters* _p = (struct parameters*) args;
-
 	float stepSize = (float)1/RESOLUTION;
-
-	//printf for debugging purposes
-	printf("Ulim: %.2f , Llim: %.2f\n", _p->llim, _p->ulim);
-	printf("stepsize: %.3f\n", stepSize);
-
 	float subArea = 0;
 	unsigned long int totRects = (_p->ulim - _p->llim)*RESOLUTION;
 	for(int i =0; i <= totRects; ++i)
@@ -31,13 +23,11 @@ void* calcArea ( void *args)
 		float j = _p->llim + (float)i/RESOLUTION;
 		subArea += (j*j)*stepSize;	//small rectangle  of height i^2 and width stepSize
 	}
-
 	printf("subArea = %.3f\n", subArea);
 	pthread_mutex_lock(&area_lock);
 	area += subArea;
 	pthread_mutex_unlock(&area_lock);
 	printf("Area = %.3f\n", area);
-
 	return NULL;
 }
 
@@ -49,7 +39,6 @@ int main()
 	scanf("%d", &lLim);
 	printf("\nEnter upper limit of integration: ");
 	scanf("%d", &uLim);
-	printf("Got those values \n");
 	blockSize = (float)(uLim - lLim)/THREAD_COUNT;
 	//--printf for debugging
 	printf("BlockSize as defined in main: %.3f\n", blockSize);
@@ -74,8 +63,6 @@ int main()
 
 	for(int i=0; i < THREAD_COUNT; i++)
 	{
-		printf("In the for loop..\n");
-		printf("i : %d\n", i);
 		p[i].llim = lLim + i*blockSize;
 		p[i].ulim = p[i].llim + blockSize;
 		retVal = pthread_create(&tID[i], NULL, calcArea, &p[i]);
@@ -92,7 +79,7 @@ int main()
 	}
 
 	printf("Integration Result = %.3f", area);
-	printf("Done!");
+	printf("\nDone!");
 	free(p);
 	pthread_mutex_destroy(&area_lock);
 
