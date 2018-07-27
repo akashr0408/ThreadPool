@@ -2,10 +2,10 @@
 #include<pthread.h>
 #include<stdlib.h>
 
-static const int THREAD_COUNT = 6;
+static const int THREAD_COUNT = 4;
 static const int RESOLUTION = 1000;
 long double area = 0;
-pthread_mutex_t areaLock;
+pthread_mutex_t areaLock = PTHREAD_MUTEX_INITIALIZER;
 
 struct parameters		//parameters for thread scope function
 {
@@ -16,18 +16,17 @@ void* calcArea ( void *args)
 {
 	struct parameters* _p = (struct parameters*) args;
 	float stepSize = (float)1/RESOLUTION;
-	float subArea = 0;
+	double subArea = 0;
 	unsigned long int totRects = (_p->ulim - _p->llim)*RESOLUTION;
 	for(int i =0; i <= totRects; ++i)
 	{
 		float j = _p->llim + (float)i/RESOLUTION;
 		subArea += (j*j)*stepSize;	//small rectangle  of height i^2 and width stepSize
 	}
-	printf("subArea = %.3f\n", subArea);
+	printf("subArea = %.6f\n", subArea);
 	pthread_mutex_lock(&areaLock);
 	area += subArea;
 	pthread_mutex_unlock(&areaLock);
-	printf("Area = %.3f\n", area);
 	return NULL;
 }
 
@@ -50,14 +49,6 @@ int main()
 		printf("Malloc Failed!.... Exiting...");
 		exit(1);
 	}
-	printf("size of p : %.3f\n", (float)sizeof(p)/sizeof(struct parameters*));
-
-	if(pthread_mutex_init(&areaLock, NULL) != 0)
-	{
-		printf("Mutex failed..Exiting..");
-		exit(1);
-	}
-
 	pthread_t tID[THREAD_COUNT];
 	void *ret;
 
@@ -71,6 +62,10 @@ int main()
 			printf("Thread not created");
 			exit(2);
 		}
+	}
+
+	for(int i=0; i < THREAD_COUNT; i++)
+	{
 		if(pthread_join(tID[i], &ret) != 0)
 		{
 			printf("Error Joining thread %d. Exiting...", i);
@@ -78,7 +73,7 @@ int main()
 		}
 	}
 
-	printf("Integration Result = %.3f", area);
+	printf("Integration Result = %.6Lf", area);
 	printf("\nDone!");
 	free(p);
 	pthread_mutex_destroy(&areaLock);

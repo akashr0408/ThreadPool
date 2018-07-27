@@ -1,5 +1,5 @@
 CC=gcc
-FLAGS=-pthread
+FLAGS=-pthread -Wall
 
 threadmake: threadUse.c
 	$(CC) $(FLAGS) -o thread threadUse.c
