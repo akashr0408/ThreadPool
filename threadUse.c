@@ -5,7 +5,7 @@
 static const int THREAD_COUNT = 6;
 static const int RESOLUTION = 1000;
 long double area = 0;
-pthread_mutex_t area_lock;
+pthread_mutex_t areaLock;
 
 struct parameters		//parameters for thread scope function
 {
@@ -24,9 +24,9 @@ void* calcArea ( void *args)
 		subArea += (j*j)*stepSize;	//small rectangle  of height i^2 and width stepSize
 	}
 	printf("subArea = %.3f\n", subArea);
-	pthread_mutex_lock(&area_lock);
+	pthread_mutex_lock(&areaLock);
 	area += subArea;
-	pthread_mutex_unlock(&area_lock);
+	pthread_mutex_unlock(&areaLock);
 	printf("Area = %.3f\n", area);
 	return NULL;
 }
@@ -52,7 +52,7 @@ int main()
 	}
 	printf("size of p : %.3f\n", (float)sizeof(p)/sizeof(struct parameters*));
 
-	if(pthread_mutex_init(&area_lock, NULL) != 0)
+	if(pthread_mutex_init(&areaLock, NULL) != 0)
 	{
 		printf("Mutex failed..Exiting..");
 		exit(1);
@@ -81,7 +81,7 @@ int main()
 	printf("Integration Result = %.3f", area);
 	printf("\nDone!");
 	free(p);
-	pthread_mutex_destroy(&area_lock);
+	pthread_mutex_destroy(&areaLock);
 
 	return 0;
 }
