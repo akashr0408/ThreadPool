@@ -6,7 +6,7 @@ static const int THREAD_COUNT = 6;
 static const int RESOLUTION = 100;
 
 long double area = 0;
-pthread_mutex_t lock;
+pthread_mutex_t area_lock;
 
 
 struct parameters		//parameters for thread scope function
@@ -17,27 +17,27 @@ struct parameters		//parameters for thread scope function
 void* calcArea ( void *args)
 {
 	struct parameters* _p = (struct parameters*) args;
-	
+
 	float stepSize = (float)1/RESOLUTION;
-	
+
 	//printf for debugging purposes
 	printf("Ulim: %.2f , Llim: %.2f\n", _p->llim, _p->ulim);
 	printf("stepsize: %.3f\n", stepSize);
 
 	float subArea = 0;
-	unsigned long int totRects = (_p->ulim - _p->llim)*RESOLUTION;	
+	unsigned long int totRects = (_p->ulim - _p->llim)*RESOLUTION;
 	for(int i =0; i <= totRects; ++i)
 	{
 		float j = _p->llim + (float)i/RESOLUTION;
 		subArea += (j*j)*stepSize;	//small rectangle  of height i^2 and width stepSize
 	}
-	
-	printf("subArea = %.3f\n", subArea);		
-	//pthread_mutex_lock(&lock);
+
+	printf("subArea = %.3f\n", subArea);
+	pthread_mutex_lock(&area_lock);
 	area += subArea;
-	//pthread_mutex_unlock(&lock);
+	pthread_mutex_unlock(&area_lock);
 	printf("Area = %.3f\n", area);
-	
+
 	return NULL;
 }
 
@@ -49,30 +49,30 @@ int main()
 	scanf("%d", &lLim);
 	printf("\nEnter upper limit of integration: ");
 	scanf("%d", &uLim);
-	printf("Got those values \n");	
+	printf("Got those values \n");
 	blockSize = (float)(uLim - lLim)/THREAD_COUNT;
 	//--printf for debugging
 	printf("BlockSize as defined in main: %.3f\n", blockSize);
 
 	//---------- create struct objects and thread ids---------
-	struct parameters *p= malloc(sizeof(struct parameters)* THREAD_COUNT);
+	struct parameters *p = malloc(THREAD_COUNT * sizeof *p);
 	if(p == NULL)
 	{
 		printf("Malloc Failed!.... Exiting...");
 		exit(1);
 	}
 	printf("size of p : %.3f\n", (float)sizeof(p)/sizeof(struct parameters*));
-	
-	if(pthread_mutex_init(&lock, NULL) != 0)
+
+	if(pthread_mutex_init(&area_lock, NULL) != 0)
 	{
 		printf("Mutex failed..Exiting..");
 		exit(1);
 	}
 
-	pthread_t tID[4];
+	pthread_t tID[THREAD_COUNT];
 	void *ret;
-	
-	for(int i=0; i<THREAD_COUNT; i++)
+
+	for(int i=0; i < THREAD_COUNT; i++)
 	{
 		printf("In the for loop..\n");
 		printf("i : %d\n", i);
@@ -94,7 +94,7 @@ int main()
 	printf("Integration Result = %.3f", area);
 	printf("Done!");
 	free(p);
-	pthread_mutex_destroy(&lock);
-	
+	pthread_mutex_destroy(&area_lock);
+
 	return 0;
 }
